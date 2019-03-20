@@ -27,4 +27,11 @@ jobs:
             docker push jlivermont/${CIRCLE_PROJECT_REPONAME}:latest
       - run:
           name: Trigger update of build badges
-          command: curl -X POST https://hooks.microbadger.com/images/jlivermont/raven-base/ZFKCDPa7vqVWr-PLzFdVzd-ct0Q=
+          command: curl -X POST https://hooks.microbadger.com/images/jlivermont/raven-base/1ceuHt9zFsn4-kGHF4F0oca60ZY=
+      - run:
+          name: Trigger downstream build of raven
+          command: |
+            curl -X POST \
+            -H 'Content-Type: application/json' \
+            -d '{ "build_parameters": { "TRIGGERED_BY": "'"${CIRCLE_PROJECT_REPONAME}"'", "NEW_UPSTREAM_VERSION": "'"${CIRCLE_BUILD_NUM}"'" } }' \
+            "https://circleci.com/api/v1.1/project/github/jlivermont/raven/tree/master?circle-token=${API_TOKEN}"
