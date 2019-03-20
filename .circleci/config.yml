@@ -1,0 +1,30 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: docker:18.09.3-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install build dependencies
+          command: |
+            apk add --no-cache curl py-pip
+            pip install docker-squash
+      - run:
+          name: Build Docker image
+          command:  docker build --build-arg VCS_REF=${CIRCLE_SHA1} -t unsquashed .
+      - run:
+          name: Squash Docker image
+          command: |
+            docker-squash -t jlivermont/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BUILD_NUM} unsquashed
+            docker tag jlivermont/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BUILD_NUM} jlivermont/${CIRCLE_PROJECT_REPONAME}:latest
+      - run:
+          name: Push Docker image
+          command: |
+            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+            docker push jlivermont/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BUILD_NUM}
+            docker push jlivermont/${CIRCLE_PROJECT_REPONAME}:latest
+      - run:
+          name: Trigger update of build badges
+          command: curl -X POST https://hooks.microbadger.com/images/jlivermont/raven-base/ZFKCDPa7vqVWr-PLzFdVzd-ct0Q=
